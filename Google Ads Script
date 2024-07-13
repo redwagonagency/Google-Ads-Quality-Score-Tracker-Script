@@ -1,0 +1,42 @@
+function main() {
+  try {
+    var spreadsheetId = '1Ro_zz9WqfNEz8QErakUvB86juIwWTigSeEEjk3mNwVk'; // Replace with your Google Sheets ID
+    var sheetName = 'Sheet1'; // Replace with the name of your sheet
+    var date = new Date().toISOString().slice(0, 10);
+    
+    var sheet = getSheet(spreadsheetId, sheetName);
+    
+    // Add headers if they don't exist
+    if (sheet.getLastRow() == 0) {
+      sheet.appendRow(['Date', 'Campaign', 'Ad Group', 'Keyword', 'Quality Score']);
+    }
+    
+    // Get keywords and their Quality Scores
+    var keywordsIterator = AdsApp.keywords()
+      .withCondition("Status = ENABLED")
+      .get();
+    
+    while (keywordsIterator.hasNext()) {
+      var keyword = keywordsIterator.next();
+      var qualityScore = keyword.getQualityScore();
+      var campaignName = keyword.getCampaign().getName();
+      var adGroupName = keyword.getAdGroup().getName();
+      var keywordText = keyword.getText();
+      
+      // Append the data to the sheet
+      sheet.appendRow([date, campaignName, adGroupName, keywordText, qualityScore]);
+    }
+  } catch (e) {
+    Logger.log("Error: " + e.message);
+    throw e;
+  }
+}
+
+function getSheet(spreadsheetId, sheetName) {
+  var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+  var sheet = spreadsheet.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(sheetName);
+  }
+  return sheet;
+}
